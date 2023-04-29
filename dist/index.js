@@ -22,12 +22,29 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const node_stream_1 = require("node:stream");
 const fs_1 = require("fs");
+const JSONStream = require("JSONStream");
 const path = __importStar(require("path"));
-const relativePath = "./public/BigData.json";
+const csv_parser_1 = __importDefault(require("csv-parser"));
+const relativePath = "./public/MOCK_DATA.csv";
 const fullPath = path.join(process.cwd(), relativePath);
 const read = (0, fs_1.createReadStream)(fullPath);
-read.on("data", (chunk) => {
-    console.log("CHUNK", chunk.toString());
+const write = (0, fs_1.createWriteStream)("./public/modifiedCSV.json");
+const parser = (0, csv_parser_1.default)();
+const stringify = JSONStream.stringify();
+class Modify extends node_stream_1.Transform {
+    _transform(chunk, encoding, callback) {
+        chunk.gender === "Male" ? 1 === 1 : this.push(chunk);
+        callback();
+    }
+}
+const modify = new Modify({ objectMode: true });
+process.on("beforeExit", () => {
+    modify.end();
 });
+read.pipe(parser).pipe(modify).pipe(stringify).pipe(write);
